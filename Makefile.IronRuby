@@ -1,0 +1,26 @@
+.PHONY: all clean ironruby
+
+all: ironruby
+
+ironruby:
+	xbuild Solutions/Ruby.sln /p:TreatWarningsAsErrors=false /p:Mono=true /p:Configuration=Release
+	$(MAKE) -C Languages/Ruby/Scripts/mono
+
+clean:
+	xbuild Solutions/Ruby.sln /p:Configuration=Release /t:Clean /p:Mono=true
+
+PREFIX = /usr/local/ironruby
+
+fixup-configs:
+	for config in bin/Release/*.config; do \
+		echo $$config; \
+		sed -i -e 's,value="..\\..\\Languages\\Ruby\\StdLib",value="..\\lib",g' $$config; \
+	done
+
+install: ironruby fixup-configs
+	mkdir -p $(PREFIX)/lib
+	mkdir -p $(PREFIX)/bin
+	cp -R Languages/Ruby/StdLib/* $(PREFIX)/lib
+	cp -R bin/Release/* $(PREFIX)/bin
+	$(MAKE) -C Languages/Ruby/Scripts/mono install
+	
